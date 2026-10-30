@@ -1,0 +1,101 @@
+/* styles/theme.css
+   Tokens de diseño: azul marino + dorado.
+   Tailwind v4 genera utilidades a partir de @theme (bg-navy-900, text-gold-700, bg-primary...). */
+
+@theme {
+  /* Escala azul marino: 900 es tu --accent actual, 950 tu --foreground */
+  --color-navy-50: #f0f1fb;
+  --color-navy-100: #e1e3f7;
+  --color-navy-200: #c3c7ee;
+  --color-navy-300: #98a0e0;
+  --color-navy-400: #6470cf;
+  --color-navy-500: #3a47b8;
+  --color-navy-600: #232a9a;
+  --color-navy-700: #12167f;
+  --color-navy-800: #0a0c6e;
+  --color-navy-900: #040461;
+  --color-navy-950: #010118;
+
+  /* Escala dorada: 500 es tu --muted actual */
+  --color-gold-50: #fbf7ec;
+  --color-gold-100: #f5ecd0;
+  --color-gold-200: #ebd8a1;
+  --color-gold-300: #dfc072;
+  --color-gold-400: #d0a55a;
+  --color-gold-500: #bd903e;
+  --color-gold-600: #9c7330;
+  --color-gold-700: #7a5a27;
+  --color-gold-800: #5e4421;
+  --color-gold-900: #4a371d;
+  --color-gold-950: #2a1e0e;
+
+  /* Familias tipográficas */
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+
+/* Tokens semánticos: es lo que deben usar los componentes.
+   Cambiar la paleta = cambiar solo este bloque. */
+:root {
+  --background: #f6f5f2;
+  --surface: #ffffff;
+  --surface-muted: #fafafd;
+  --border: #e4e3de;
+  --border-strong: #c9c7bf;
+
+  --foreground: var(--color-navy-950);
+  --text: var(--color-navy-950);
+  --text-muted: #55556f; /* ~6.5:1 sobre --background (cumple AA) */
+  --text-subtle: #6b6b82; /* ~4.8:1 sobre blanco, mínimo para texto pequeño */
+
+  --primary: var(--color-navy-900);
+  --primary-hover: var(--color-navy-700);
+  --primary-soft: var(--color-navy-50);
+  --primary-soft-text: var(--color-navy-800);
+  --on-primary: #ffffff;
+
+  --gold: var(--color-gold-500); /* solo decoración, bordes, fondos, iconos grandes */
+  --gold-soft: var(--color-gold-50);
+  --gold-text: var(--color-gold-700); /* dorado legible como texto (~5.5:1) */
+
+  --danger: #a43f2e;
+  --danger-soft: #fff0ed;
+  --success: #34764b;
+  --success-soft: #eaf5ed;
+
+  --focus-ring: var(--color-navy-500);
+
+  /* Compatibilidad temporal con el CSS existente; elimínalos al migrar */
+  --muted: var(--gold);
+  --accent: var(--primary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-text: var(--primary-soft-text);
+  --color-on-primary: var(--on-primary);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-text: var(--gold-text);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+}
+
+/* Foco accesible y consistente en todo el proyecto */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

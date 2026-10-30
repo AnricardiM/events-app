@@ -1,0 +1,268 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-aside {
+  position: relative;
+  display: flex;
+  min-height: calc(100vh - 48px);
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 70% 20%, rgb(225 190 129 / 35%), transparent 34%),
+    linear-gradient(145deg, var(--foreground) 3%, var(--foreground) 55%, var(--foreground) 100%);
+  color: #fff;
+}
+
+.dashboard-content {
+  width: min(100%, 1060px);
+  margin: 0 auto;
+}
+
+.dashboard-welcome {
+  margin-bottom: 30px;
+}
+
+.dashboard-welcome h1 {
+  margin: 0 0 9px;
+  color: #222238;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(27px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -1.1px;
+}
+
+.dashboard-welcome p {
+  margin: 0;
+  color: #858593;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.stat-card,
+.task-list-card {
+  border: 1px solid #e9e9ee;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(25 25 58 / 3%);
+}
+
+.stat-card {
+  min-height: 190px;
+  padding: 22px 24px;
+}
+
+.stat-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.stat-icon-violet {
+  background: #eeedfb;
+  color: #514ac4;
+}
+
+.stat-icon-gold {
+  background: #fff4df;
+  color: #c5831b;
+}
+
+.stat-icon-red {
+  background: #fff0ef;
+  color: #d2534f;
+}
+
+.stat-icon-green {
+  background: #eaf5ed;
+  color: #3c8b58;
+}
+
+.stat-value {
+  margin: 14px 0 4px;
+  color: #23233a;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+}
+
+.stat-card h2,
+.stat-subtitle {
+  margin: 0;
+}
+
+.stat-card h2 {
+  color: #3e3e50;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat-subtitle {
+  margin-top: 5px;
+  color: #8b8b98;
+  font-size: 12px;
+}
+
+.task-list-card {
+  padding: 24px;
+}
+
+.task-list-card > h2 {
+  margin: 0 0 8px;
+  color: #29293d;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.task-list-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-list-card li {
+  display: flex;
+  min-height: 73px;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid #eeeeF2;
+}
+
+.task-list-card li:last-child {
+  border-bottom: 0;
+}
+
+.task-indicator {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #e7a13c;
+}
+
+.task-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-copy h3,
+.task-copy p {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-copy h3 {
+  color: #3a3a4e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.task-copy p {
+  margin-top: 5px;
+  color: #92929e;
+  font-size: 12px;
+}
+
+.task-arrow {
+  color: #9696a3;
+  font-size: 19px;
+}
+
+@media (max-width: 800px) {
+   .auth-aside {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .stats-grid {
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    min-height: 174px;
+    padding: 18px;
+  }
+
+  .task-list-card {
+    padding: 20px 18px;
+  }
+
+}
+
+@media (max-width: 520px) {
+
+  .dashboard-welcome {
+    margin-bottom: 22px;
+  }
+
+  .dashboard-welcome h1 {
+    font-size: 27px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    min-height: 0;
+    padding: 18px 20px;
+  }
+
+  .stat-value {
+    margin-top: 12px;
+    font-size: 26px;
+  }
+
+  .task-list-card {
+    padding: 20px 16px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
