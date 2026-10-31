@@ -74,8 +74,6 @@ export function ContentsManagement({
     [editors],
   );
 
-  const matchesEvent = eventFilter === "all" || content.event_id === eventFilter;
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return contents.filter((content) => {
@@ -84,11 +82,13 @@ export function ContentsManagement({
         content.code.toLowerCase().includes(q) ||
         content.file_name.toLowerCase().includes(q) ||
         content.delivered_by.toLowerCase().includes(q);
-      const matchesEvent =
-        eventFilter === "all" || content.event_blocks?.events?.id === eventFilter;
+      
+      const matchesEvent = eventFilter === "all" || content.event_id === eventFilter;
+
       const matchesAccepted =
         acceptedFilter === "all" ||
         (acceptedFilter === "accepted" ? content.accepted : !content.accepted);
+    
       return matchesQuery && matchesEvent && matchesAccepted;
     });
   }, [contents, query, eventFilter, acceptedFilter]);

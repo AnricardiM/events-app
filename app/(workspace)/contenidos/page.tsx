@@ -57,7 +57,7 @@ const currentUserId = claimsData?.claims?.sub ?? null;
     canRegister={isAdmin || Boolean(ingresador.data)}
     contents={contents}
     currentUserId={currentUserId}
-    editors={editors}
+    editors={Array.isArray(editors) ? editors : []}
     events={events}
     isAdmin={isAdmin}
 />

@@ -20,7 +20,7 @@ export const stats: {
   title: string;
   subtitle: string;
   icon: IconName;
-  tone: "violet" | "gold" | "red" | "green";
+  tone: "primary" | "gold" | "danger" | "success";
 }[] = [
   {
     id: "ingresos",
@@ -28,7 +28,7 @@ export const stats: {
     title: "Nuevos ingresos",
     subtitle: "Por revisar",
     icon: "inbox",
-    tone: "violet",
+    tone: "primary",
   },
   {
     id: "tareas",
@@ -44,7 +44,7 @@ export const stats: {
     title: "Correcciones",
     subtitle: "Requieren atención",
     icon: "alert",
-    tone: "red",
+    tone: "gold",
   },
   {
     id: "cronograma",
@@ -52,7 +52,7 @@ export const stats: {
     title: "En cronograma",
     subtitle: "Registros programados",
     icon: "calendar",
-    tone: "green",
+    tone: "gold",
   },
 ];
 

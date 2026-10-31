@@ -89,17 +89,3 @@ export function getRoleConflict(
 
   return null;
 }
-
-export async function getUserRoles(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
-
-  if (error) return { data: [] as AppRole[], error };
-
-  return {
-    data: (data ?? []).map((row) => row.role).filter(isAppRole),
-    error: null,
-  };
-}
