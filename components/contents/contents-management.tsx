@@ -31,7 +31,32 @@ const fieldControl =
   "h-[42px] w-full rounded-lg border border-border bg-surface text-[13px] text-text focus-visible:border-primary";
 const rowButton =
   "min-h-[30px] cursor-pointer whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55";
-const cell = "align-middle border-t border-border px-4 py-3 text-xs first:pl-[22px] last:pr-[22px]";
+
+// En escritorio: celdas de tabla con borde y padding.
+// En móvil (max-md): cada fila es una tarjeta y las celdas se apilan.
+const cell =
+  "min-w-0 align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
+
+const headerLabels = [
+  "Código",
+  "Archivo",
+  "Tipo",
+  "Formato",
+  "Bloque",
+  "Duración",
+  "Editor",
+  "Edición",
+  "Aceptado",
+];
+
+// Etiqueta de campo: solo se ve en móvil, porque ahí no hay encabezados de tabla.
+function MobileLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-text-subtle md:hidden">
+      {children}
+    </span>
+  );
+}
 
 export function ContentsManagement({
   blocks,
@@ -43,7 +68,7 @@ export function ContentsManagement({
   currentUserId,
   editors,
   events,
-  isAdmin
+  isAdmin,
 }: {
   blocks: BlockOption[];
   canAccept: boolean;
@@ -55,8 +80,7 @@ export function ContentsManagement({
   editors: EditorOption[];
   events: EventOption[];
   isAdmin: boolean;
-}) 
-{
+}) {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [query, setQuery] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
@@ -82,13 +106,14 @@ export function ContentsManagement({
         content.code.toLowerCase().includes(q) ||
         content.file_name.toLowerCase().includes(q) ||
         content.delivered_by.toLowerCase().includes(q);
-      
-      const matchesEvent = eventFilter === "all" || content.event_id === eventFilter;
+
+      const matchesEvent =
+        eventFilter === "all" || content.event_id === eventFilter;
 
       const matchesAccepted =
         acceptedFilter === "all" ||
         (acceptedFilter === "accepted" ? content.accepted : !content.accepted);
-    
+
       return matchesQuery && matchesEvent && matchesAccepted;
     });
   }, [contents, query, eventFilter, acceptedFilter]);
@@ -100,8 +125,8 @@ export function ContentsManagement({
   }
 
   return (
-    <section className="min-h-[calc(100vh-var(--dashboard-header-height)-100px)]">
-      <div className="mx-auto w-full max-w-[1180px]">
+    <section className="min-h-[calc(100vh-var(--dashboard-header-height)-100px)] min-w-0 max-w-full">
+      <div className="mx-auto w-full min-w-0 max-w-[1180px]">
         <header className="mb-7 flex items-center justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-4">
           <div>
             <p className="mb-2 text-[10px] font-bold tracking-[0.14em] text-primary">
@@ -118,7 +143,9 @@ export function ContentsManagement({
               onClick={() => setEditing("new")}
               type="button"
             >
-              <span aria-hidden="true" className="text-[19px] leading-none">+</span>
+              <span aria-hidden="true" className="text-[19px] leading-none">
+                +
+              </span>
               Registrar contenido
             </button>
           )}
@@ -128,7 +155,7 @@ export function ContentsManagement({
           aria-label="Filtros de contenidos"
           className="mb-5 flex flex-wrap items-end gap-3.5 rounded-xl border border-border bg-surface p-4 max-sm:p-3"
         >
-          <label className="min-w-[200px] flex-1 max-md:basis-full">
+          <label className="min-w-[200px] flex-1 max-md:min-w-0 max-md:basis-full">
             <span className="sr-only">Buscar por código, archivo o persona</span>
             <input
               className={`${fieldControl} px-3 placeholder:text-text-subtle`}
@@ -159,7 +186,9 @@ export function ContentsManagement({
             <span>Aceptación</span>
             <select
               className={`${fieldControl} pl-[11px] pr-[30px]`}
-              onChange={(event) => setAcceptedFilter(event.target.value as AcceptedFilter)}
+              onChange={(event) =>
+                setAcceptedFilter(event.target.value as AcceptedFilter)
+              }
               value={acceptedFilter}
             >
               <option value="all">Todos</option>
@@ -171,7 +200,7 @@ export function ContentsManagement({
 
         <section
           aria-label="Listado de contenidos"
-          className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
+          className="min-w-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
         >
           {notice && (
             <p
@@ -204,7 +233,10 @@ export function ContentsManagement({
               title="Aún no hay contenidos"
             />
           ) : filtered.length === 0 ? (
-            <Empty text="Prueba cambiando el texto o los filtros." title="No encontramos coincidencias">
+            <Empty
+              text="Prueba cambiando el texto o los filtros."
+              title="No encontramos coincidencias"
+            >
               <button
                 className={`${primaryButton} mt-3.5 min-h-[34px] px-3 text-[11px]`}
                 onClick={resetFilters}
@@ -214,58 +246,79 @@ export function ContentsManagement({
               </button>
             </Empty>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1080px] border-collapse text-left">
-                <thead>
+            // Un solo render: tabla en escritorio, tarjetas en móvil (max-md).
+            // El ancho mínimo de la tabla solo aplica desde md; en móvil no
+            // existe, así que la página nunca se ensancha más que la pantalla.
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="w-full border-collapse text-left max-md:block md:min-w-[1080px]">
+                <thead className="max-md:sr-only">
                   <tr>
-                   {["Código", "Archivo", "Tipo", "Formato", "Bloque", "Duración", "Editor", "Edición", "Aceptado"].map(
-                      (label) => (
-                        <th
-                          className="h-11 bg-surface-muted px-4 text-left text-[10px] font-bold uppercase tracking-wider text-text-subtle first:pl-[22px]"
-                          key={label}
-                          scope="col"
-                        >
-                          {label}
-                        </th>
-                      ),
-                    )}
-                    <th className="h-11 bg-surface-muted px-4 pr-[22px]" scope="col">
+                    {headerLabels.map((label) => (
+                      <th
+                        className="h-11 bg-surface-muted px-4 text-left text-[10px] font-bold uppercase tracking-wider text-text-subtle first:pl-[22px]"
+                        key={label}
+                        scope="col"
+                      >
+                        {label}
+                      </th>
+                    ))}
+                    <th
+                      className="h-11 bg-surface-muted px-4 pr-[22px]"
+                      scope="col"
+                    >
                       <span className="sr-only">Acciones</span>
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="max-md:block">
                   {filtered.map((content) => (
-                    <tr key={content.id}>
-                      <td className={`${cell} whitespace-nowrap font-semibold text-text`}>
+                    <tr
+                      className="max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-3 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
+                      key={content.id}
+                    >
+                      <td
+                        className={`${cell} whitespace-nowrap font-semibold text-text`}
+                      >
+                        <MobileLabel>Código</MobileLabel>
                         {content.code}
                       </td>
-                      <td className={cell}>
-                        <strong className="block max-w-[220px] truncate text-xs font-semibold text-text">
+                      <td className={`${cell} max-md:col-span-2`}>
+                        <MobileLabel>Archivo</MobileLabel>
+                        <strong className="block max-w-[220px] truncate text-xs font-semibold text-text max-md:max-w-full">
                           {content.file_name}
                         </strong>
-                        <span className="block max-w-[220px] truncate text-[11px] text-text-subtle">
+                        <span className="block max-w-[220px] truncate text-[11px] text-text-subtle max-md:max-w-full">
                           {content.delivered_by}
                         </span>
                       </td>
-                      <td className={cell}>{categoryLabels[content.content_category]}</td>
+                      <td className={cell}>
+                        <MobileLabel>Tipo</MobileLabel>
+                        {categoryLabels[content.content_category]}
+                      </td>
                       <td className={`${cell} text-text-muted`}>
-                        {mediaLabels[content.media_type]} · {sourceLabels[content.source]}
+                        <MobileLabel>Formato</MobileLabel>
+                        {mediaLabels[content.media_type]} ·{" "}
+                        {sourceLabels[content.source]}
                         <span className="block text-[11px] text-text-subtle">
                           {content.files_count}{" "}
                           {content.files_count === 1 ? "archivo" : "archivos"}
                         </span>
                       </td>
                       <td className={`${cell} text-text-muted`}>
-                      {content.event_blocks?.name ?? "—"}
-                      <span className="block text-[11px] text-text-subtle">
-                        {content.events?.name ?? ""}
-                      </span>
-                     </td>
-                      <td className={`${cell} whitespace-nowrap text-text-muted`}>
+                        <MobileLabel>Bloque</MobileLabel>
+                        {content.event_blocks?.name ?? "—"}
+                        <span className="block text-[11px] text-text-subtle">
+                          {content.events?.name ?? ""}
+                        </span>
+                      </td>
+                      <td
+                        className={`${cell} whitespace-nowrap text-text-muted`}
+                      >
+                        <MobileLabel>Duración</MobileLabel>
                         {formatClock(content.duration_seconds)}
                       </td>
-                      <td className={cell}>
+                      <td className={`${cell} max-md:col-span-2`}>
+                        <MobileLabel>Editor</MobileLabel>
                         <EditorCell
                           canAssign={canAssign}
                           content={content}
@@ -275,16 +328,26 @@ export function ContentsManagement({
                         />
                       </td>
                       <td className={cell}>
+                        <MobileLabel>Edición</MobileLabel>
                         <EditedCell
-                          canToggle={isAdmin || content.assigned_editor === currentUserId}
+                          canToggle={
+                            isAdmin || content.assigned_editor === currentUserId
+                          }
                           content={content}
                           onNotice={setNotice}
                         />
                       </td>
                       <td className={cell}>
-                        <AcceptedCell canAccept={canAccept} content={content} onNotice={setNotice} />
+                        <MobileLabel>Aceptado</MobileLabel>
+                        <AcceptedCell
+                          canAccept={canAccept}
+                          content={content}
+                          onNotice={setNotice}
+                        />
                       </td>
-                      <td className={cell}>
+                      <td
+                        className={`${cell} max-md:col-span-2 max-md:border-t max-md:border-border max-md:pt-3`}
+                      >
                         <RowActions
                           canDelete={canDelete}
                           canEdit={canRegister}
@@ -362,14 +425,17 @@ function EditorCell({
   function handleChange(value: string) {
     startTransition(async () => {
       const result = await assignContentEditor(content.id, value || null);
-      onNotice({ message: result.message, type: result.success ? "success" : "error" });
+      onNotice({
+        message: result.message,
+        type: result.success ? "success" : "error",
+      });
     });
   }
 
   return (
     <select
       aria-label={`Editor de ${content.code}`}
-      className="h-[34px] w-full min-w-[150px] rounded-lg border border-border bg-surface px-2 text-xs text-text disabled:opacity-60"
+      className="h-[34px] w-full min-w-[150px] rounded-lg border border-border bg-surface px-2 text-xs text-text disabled:opacity-60 max-md:min-w-0"
       disabled={isPending}
       onChange={(event) => handleChange(event.target.value)}
       value={content.assigned_editor ?? ""}
@@ -381,6 +447,52 @@ function EditorCell({
         </option>
       ))}
     </select>
+  );
+}
+
+function EditedCell({
+  canToggle,
+  content,
+  onNotice,
+}: {
+  canToggle: boolean;
+  content: ContentRow;
+  onNotice: (notice: Notice) => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  function toggle() {
+    startTransition(async () => {
+      const result = await setContentEdited(content.id, !content.edited);
+      onNotice({
+        message: result.message,
+        type: result.success ? "success" : "error",
+      });
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span
+        className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${
+          content.edited
+            ? "bg-success-soft text-success"
+            : "bg-surface-muted text-text-subtle ring-1 ring-border"
+        }`}
+      >
+        {content.edited ? "Editado" : "Pendiente"}
+      </span>
+      {canToggle && content.assigned_editor && (
+        <button
+          className={rowButton}
+          disabled={isPending}
+          onClick={toggle}
+          type="button"
+        >
+          {isPending ? "..." : content.edited ? "Quitar" : "Marcar editado"}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -398,12 +510,15 @@ function AcceptedCell({
   function toggle() {
     startTransition(async () => {
       const result = await setContentAccepted(content.id, !content.accepted);
-      onNotice({ message: result.message, type: result.success ? "success" : "error" });
+      onNotice({
+        message: result.message,
+        type: result.success ? "success" : "error",
+      });
     });
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <span
         className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${
           content.accepted
@@ -417,8 +532,12 @@ function AcceptedCell({
         <button
           className={rowButton}
           disabled={isPending || (!content.accepted && !content.edited)}
-          title={!content.accepted && !content.edited ? "Debe estar editado primero" : undefined}
-          onClick={toggle}          
+          onClick={toggle}
+          title={
+            !content.accepted && !content.edited
+              ? "Debe estar editado primero"
+              : undefined
+          }
           type="button"
         >
           {isPending ? "..." : content.accepted ? "Quitar" : "Aceptar"}
@@ -447,14 +566,21 @@ function RowActions({
     if (!window.confirm(`¿Eliminar el contenido ${content.code}?`)) return;
     startTransition(async () => {
       const result = await deleteContent(content.id);
-      onNotice({ message: result.message, type: result.success ? "success" : "error" });
+      onNotice({
+        message: result.message,
+        type: result.success ? "success" : "error",
+      });
     });
   }
 
   if (!canEdit && !canDelete) return null;
 
   return (
-    <div className="flex justify-end gap-[7px]" role="group" aria-label="Acciones del contenido">
+    <div
+      aria-label="Acciones del contenido"
+      className="flex justify-end gap-[7px] max-md:justify-start"
+      role="group"
+    >
       {canEdit && (
         <button
           aria-label={`Editar ${content.code}`}
@@ -474,43 +600,6 @@ function RowActions({
           type="button"
         >
           {isPending ? "..." : "Eliminar"}
-        </button>
-      )}
-    </div>
-  );
-}
-function EditedCell({
-  canToggle,
-  content,
-  onNotice,
-}: {
-  canToggle: boolean;
-  content: ContentRow;
-  onNotice: (notice: Notice) => void;
-}) {
-  const [isPending, startTransition] = useTransition();
-
-  function toggle() {
-    startTransition(async () => {
-      const result = await setContentEdited(content.id, !content.edited);
-      onNotice({ message: result.message, type: result.success ? "success" : "error" });
-    });
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${
-          content.edited
-            ? "bg-success-soft text-success"
-            : "bg-surface-muted text-text-subtle ring-1 ring-border"
-        }`}
-      >
-        {content.edited ? "Editado" : "Pendiente"}
-      </span>
-      {canToggle && content.assigned_editor && (
-        <button className={rowButton} disabled={isPending} onClick={toggle} type="button">
-          {isPending ? "..." : content.edited ? "Quitar" : "Marcar editado"}
         </button>
       )}
     </div>
