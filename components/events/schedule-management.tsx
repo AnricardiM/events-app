@@ -13,17 +13,19 @@ import type {
 } from "@/lib/services/events";
 import { BlockFormDialog } from "./block-form-dialog";
 import { Icon } from "../ui/icon";
+import { MobileLabel } from "../ui/mobile-label";
 
 type Notice = { message: string; type: "success" | "error" };
 
 const primaryButton =
   "inline-flex min-h-[42px] cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 text-[13px] font-semibold text-on-primary hover:bg-primary-hover";
 
+// En móvil los botones de fila son cuadrados de 40px (solo icono).
 const rowButton =
-  "min-h-[30px] cursor-pointer whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55";
+  "inline-flex min-h-[30px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55 max-md:size-10 max-md:min-h-0 max-md:px-0";
 
 const cell =
-  "align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
+  "min-w-0 align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px] max-md:text-sm";
 
 export function formatDuration(totalSeconds: number) {
   const sign = totalSeconds < 0 ? "-" : "";
@@ -32,6 +34,59 @@ export function formatDuration(totalSeconds: number) {
   const m = minutes % 60;
   if (h === 0) return `${sign}${m} min`;
   return m === 0 ? `${sign}${h} h` : `${sign}${h} h ${m} min`;
+}
+
+type FillState = "empty" | "incomplete" | "complete" | "over";
+
+const fillConfig: Record<FillState, { label: string; badge: string; bar: string }> = {
+  empty: {
+    label: "Sin contenido",
+    badge: "bg-surface-muted text-text-subtle ring-1 ring-border",
+    bar: "bg-primary",
+  },
+  incomplete: {
+    label: "Incompleto",
+    badge: "bg-gold-100 text-gold-800",
+    bar: "bg-primary",
+  },
+  complete: {
+    label: "Completo",
+    badge: "bg-success-soft text-success",
+    bar: "bg-success",
+  },
+  over: {
+    label: "Excede",
+    badge: "bg-danger-soft text-danger",
+    bar: "bg-danger",
+  },
+};
+
+function getFillState(
+  used: number,
+  total: number,
+  tolerance: number,
+  count: number,
+): FillState {
+  if (count === 0) return "empty";
+  const delta = used - total;
+  if (Math.abs(delta) <= tolerance) return "complete";
+  return delta > 0 ? "over" : "incomplete";
+}
+
+function describeFill(
+  blockSeconds: number,
+  progress: BlockProgress | undefined,
+  tolerance: number,
+) {
+  const used = Number(progress?.contents_seconds ?? 0);
+  const count = progress?.contents_count ?? 0;
+  return {
+    used,
+    count,
+    state: getFillState(used, blockSeconds, tolerance, count),
+    remaining: blockSeconds - used,
+    percent: blockSeconds > 0 ? Math.round((used / blockSeconds) * 100) : 0,
+  };
 }
 
 export function ScheduleManagement({
@@ -79,24 +134,24 @@ export function ScheduleManagement({
   );
   const totalBlockSeconds = blocks.reduce((sum, item) => sum + item.block_seconds, 0);
 
-  const completeBlocks = blocks.filter((block) => {
-    const item = progressByBlock.get(block.block_id);
-    return (
-      getFillState(
-        Number(item?.contents_seconds ?? 0),
+  const completeBlocks = blocks.filter(
+    (block) =>
+      describeFill(
         block.block_seconds,
+        progressByBlock.get(block.block_id),
         toleranceSeconds,
-        item?.contents_count ?? 0,
-      ) === "complete"
-    );
-  }).length;
+      ).state === "complete",
+  ).length;
 
   return (
-    <section className="min-h-[calc(100vh-var(--dashboard-header-height)-100px)]">
-      <div className="mx-auto w-full max-w-[1180px]">
+    <section className="min-h-[calc(100vh-var(--dashboard-header-height)-100px)] min-w-0 max-w-full">
+      <div className="mx-auto w-full min-w-0 max-w-[1180px]">
         <header className="mb-7 flex items-center justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-4">
           <div>
-            <Link className="mb-3 inline-block text-[11px] text-text-muted hover:text-primary" href="/eventos">
+            <Link
+              className="mb-3 inline-block text-[11px] text-text-muted hover:text-primary max-md:text-sm"
+              href="/eventos"
+            >
               ← Volver a eventos
             </Link>
             <p className="mb-2 text-[10px] font-bold tracking-[0.14em] text-primary">
@@ -105,7 +160,7 @@ export function ScheduleManagement({
             <h1 className="text-[clamp(27px,3vw,34px)] font-bold tracking-tight text-text">
               {event.name}
             </h1>
-            <p className="mt-2 text-xs text-text-muted">
+            <p className="mt-2 text-xs text-text-muted max-md:text-sm">
               {dateTime.format(new Date(event.starts_at))} —{" "}
               {dateTime.format(new Date(event.ends_at))}
             </p>
@@ -117,7 +172,9 @@ export function ScheduleManagement({
               onClick={() => setEditingBlock("new")}
               type="button"
             >
-              <span aria-hidden="true" className="text-[19px] leading-none">+</span>
+              <span aria-hidden="true" className="text-[19px] leading-none">
+                +
+              </span>
               Agregar bloque
             </button>
           )}
@@ -125,12 +182,12 @@ export function ScheduleManagement({
 
         <section
           aria-label="Listado de bloques"
-          className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
+          className="min-w-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
         >
           {notice && (
             <p
               aria-live="polite"
-              className={`mx-[18px] mt-3.5 rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal ${
+              className={`mx-[18px] mt-3.5 rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal max-md:text-xs ${
                 notice.type === "error"
                   ? "bg-danger-soft text-danger"
                   : "bg-success-soft text-success"
@@ -141,16 +198,18 @@ export function ScheduleManagement({
             </p>
           )}
 
-          <div className="flex min-h-[68px] items-center justify-between gap-4 border-b border-border px-[22px] max-sm:flex-col max-sm:items-start max-sm:py-3 max-sm:px-4">
-            <h2 className="text-[15px] font-semibold text-text">Bloques</h2>
-            <div className="grid gap-0.5 text-right text-xs text-text-muted max-sm:text-left">
+          <div className="flex min-h-[68px] items-center justify-between gap-4 border-b border-border px-[22px] max-sm:flex-col max-sm:items-start max-sm:gap-1 max-sm:px-4 max-sm:py-3">
+            <h2 className="text-[15px] font-semibold text-text max-md:text-base">
+              Bloques
+            </h2>
+            <div className="grid gap-0.5 text-right text-xs text-text-muted max-md:text-sm max-sm:text-left">
               <p>
                 {completeBlocks} de {blocks.length}{" "}
                 {blocks.length === 1 ? "bloque completo" : "bloques completos"} ·{" "}
                 {formatClock(totalContentSeconds)} de {formatClock(totalBlockSeconds)}
               </p>
               {summary && (
-                <p className="text-[11px] text-text-subtle">
+                <p className="text-[11px] text-text-subtle max-md:text-xs">
                   Bloques: {formatDuration(summary.blocks_seconds)} de{" "}
                   {formatDuration(summary.event_seconds)} del evento
                 </p>
@@ -161,14 +220,14 @@ export function ScheduleManagement({
           {blocks.length === 0 ? (
             <div className="grid min-h-[200px] content-center justify-items-center p-7 text-center">
               <h3 className="text-sm font-semibold text-text">Aún no hay bloques</h3>
-              <p className="mt-2 text-xs text-text-muted">
+              <p className="mt-2 text-xs text-text-muted max-md:text-sm">
                 {canEdit
                   ? "Agrega el primer bloque con el botón «Agregar bloque»."
                   : "El cronograma de este evento todavía no tiene bloques."}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full max-w-full overflow-x-auto">
               <table className="w-full border-collapse text-left max-md:block">
                 <thead className="max-md:sr-only">
                   <tr>
@@ -189,66 +248,77 @@ export function ScheduleManagement({
                   </tr>
                 </thead>
                 <tbody className="max-md:block">
-                  {blocks.map((block) => (
-                    <tr
-                      className="max-md:grid max-md:gap-y-2 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
-                      key={block.block_id}
-                    >
-                      <td className={cell}>
-                        <strong className="text-xs font-semibold text-text">{block.block_name}</strong>
-                        {(contentsByBlock.get(block.block_id)?.length ?? 0) > 0 && (
-                          <details className="mt-1.5">
-                            <summary className="cursor-pointer text-[11px] text-text-muted hover:text-primary">
-                              Ver contenidos
-                            </summary>
-                            <ul className="mt-2 grid gap-1.5">
-                              {contentsByBlock.get(block.block_id)!.map((item) => (
-                                <li
-                                  className="flex items-center justify-between gap-3 rounded-md bg-surface-muted px-2.5 py-1.5 text-[11px] text-text-muted"
-                                  key={item.id}
-                                >
-                                  <span className="min-w-0 truncate">
-                                    <strong className="text-text">{item.code}</strong> · {item.file_name} ·{" "}
-                                    {categoryLabels[item.content_category]}
-                                  </span>
-                                  <span className="flex flex-none items-center gap-2">
-                                    {formatClock(item.duration_seconds)}
-                                    <span className={item.accepted ? "text-success" : "text-text-subtle"}>
-                                     {item.accepted ? "Aceptado" : item.edited ? "Editado" : item.assigned_editor ? "Con editor" : "Sin editor"}
-                                    </span>
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        )}
-                      </td>
-                      <td className={`${cell} whitespace-nowrap text-text-muted`}>
-                        {timeOnly.format(new Date(block.starts_at))} –{" "}
-                        {timeOnly.format(new Date(block.ends_at))}
-                      </td>
-                      <td className={`${cell} whitespace-nowrap text-text-muted`}>
-                        {formatDuration(block.block_seconds)}
-                      </td>
-                      <td className={cell}>
-                        <ContentProgress
-                          blockSeconds={block.block_seconds}
-                          progress={progressByBlock.get(block.block_id)}
-                          toleranceSeconds={toleranceSeconds}
-                        />
-                      </td>
-                      {canEdit && (
-                        <td className={cell}>
-                          <BlockActions
-                            block={block}
-                            eventId={event.id}
-                            onEdit={() => setEditingBlock(block)}
-                            onNotice={setNotice}
-                          />
+                  {blocks.map((block) => {
+                    const blockProgress = progressByBlock.get(block.block_id);
+                    const blockContents = contentsByBlock.get(block.block_id) ?? [];
+                    const fill = describeFill(
+                      block.block_seconds,
+                      blockProgress,
+                      toleranceSeconds,
+                    );
+
+                    return (
+                      // Móvil, de arriba hacia abajo (orden visual con `order`; el DOM no cambia):
+                      //  1. Estado del bloque y nombre (izquierda) + acciones (derecha)
+                      //  2. Horario y duración
+                      //  3. Avance del contenido y lista de contenidos
+                      <tr
+                        className="max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-start max-md:gap-x-3 max-md:gap-y-3.5 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
+                        key={block.block_id}
+                      >
+                        <td className={`${cell} max-md:order-1 max-md:col-start-1`}>
+                          {/* Solo móvil: el estado del bloque va arriba, como etiqueta. */}
+                          <div className="mb-2 md:hidden">
+                            <FillSummary fill={fill} />
+                          </div>
+                          <strong className="text-xs font-semibold text-text max-md:text-base">
+                            {block.block_name}
+                          </strong>
+                          {/* Escritorio: la lista va bajo el nombre. En móvil va al final. */}
+                          <div className="max-md:hidden">
+                            <ContentsList items={blockContents} />
+                          </div>
                         </td>
-                      )}
-                    </tr>
-                  ))}
+
+                        <td
+                          className={`${cell} whitespace-nowrap text-text-muted max-md:order-2 max-md:col-start-1`}
+                        >
+                          <MobileLabel>Horario</MobileLabel>
+                          {timeOnly.format(new Date(block.starts_at))} –{" "}
+                          {timeOnly.format(new Date(block.ends_at))}
+                        </td>
+
+                        <td
+                          className={`${cell} whitespace-nowrap text-text-muted max-md:order-2 max-md:col-start-2`}
+                        >
+                          <MobileLabel>Duración</MobileLabel>
+                          {formatDuration(block.block_seconds)}
+                        </td>
+
+                        <td className={`${cell} max-md:order-3 max-md:col-span-2`}>
+                          <ContentProgress
+                            blockSeconds={block.block_seconds}
+                            fill={fill}
+                            progress={blockProgress}
+                          />
+                          <div className="md:hidden">
+                            <ContentsList items={blockContents} />
+                          </div>
+                        </td>
+
+                        {canEdit && (
+                          <td className={`${cell} max-md:order-1 max-md:col-start-2`}>
+                            <BlockActions
+                              block={block}
+                              eventId={event.id}
+                              onEdit={() => setEditingBlock(block)}
+                              onNotice={setNotice}
+                            />
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -270,6 +340,43 @@ export function ScheduleManagement({
         />
       )}
     </section>
+  );
+}
+
+function ContentsList({ items }: { items: BlockContent[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <details className="mt-1.5 max-md:mt-3">
+      <summary className="cursor-pointer text-[11px] text-text-muted hover:text-primary max-md:text-sm">
+        Ver contenidos ({items.length})
+      </summary>
+      <ul className="mt-2 grid gap-1.5">
+        {items.map((item) => (
+          <li
+            className="flex items-center justify-between gap-3 rounded-md bg-surface-muted px-2.5 py-1.5 text-[11px] text-text-muted max-md:flex-col max-md:items-start max-md:gap-1 max-md:px-3 max-md:py-2 max-md:text-xs"
+            key={item.id}
+          >
+            <span className="min-w-0 max-w-full truncate">
+              <strong className="text-text">{item.code}</strong> · {item.file_name} ·{" "}
+              {categoryLabels[item.content_category]}
+            </span>
+            <span className="flex flex-none items-center gap-2">
+              {formatClock(item.duration_seconds)}
+              <span className={item.accepted ? "text-success" : "text-text-subtle"}>
+                {item.accepted
+                  ? "Aceptado"
+                  : item.edited
+                    ? "Editado"
+                    : item.assigned_editor
+                      ? "Con editor"
+                      : "Sin editor"}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -304,7 +411,11 @@ function BlockActions({
   }
 
   return (
-    <div className="flex justify-end gap-[7px] max-md:justify-start" role="group" aria-label="Acciones del bloque">
+    <div
+      aria-label="Acciones del bloque"
+      className="flex justify-end gap-[7px] max-md:gap-2"
+      role="group"
+    >
       <button
         aria-label={`Editar bloque ${block.block_name}`}
         className={rowButton}
@@ -315,110 +426,90 @@ function BlockActions({
         <Icon name="edit" />
       </button>
       <button
+        aria-label={`Eliminar bloque ${block.block_name}`}
         className={`${rowButton} border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger`}
         disabled={isPending}
         onClick={handleDelete}
+        title="Eliminar"
         type="button"
       >
-        {isPending ? "Eliminando..." : "Eliminar"}
+        {/* Escritorio: texto. Móvil: solo icono. */}
+        <span className="max-md:hidden">
+          {isPending ? "Eliminando..." : "Eliminar"}
+        </span>
+        <span className="md:hidden">
+          <Icon name="trash" />
+        </span>
       </button>
     </div>
   );
 }
 
-type FillState = "empty" | "incomplete" | "complete" | "over";
+type Fill = ReturnType<typeof describeFill>;
 
-const fillConfig: Record<FillState, { label: string; badge: string; bar: string }> = {
-  empty: {
-    label: "Sin contenido",
-    badge: "bg-surface-muted text-text-subtle ring-1 ring-border",
-    bar: "bg-primary",
-  },
-  incomplete: {
-    label: "Incompleto",
-    badge: "bg-gold-100 text-gold-800",
-    bar: "bg-primary",
-  },
-  complete: {
-    label: "Completo",
-    badge: "bg-success-soft text-success",
-    bar: "bg-success",
-  },
-  over: {
-    label: "Excede",
-    badge: "bg-danger-soft text-danger",
-    bar: "bg-danger",
-  },
-};
+// Etiqueta de estado + cuánto falta o sobra.
+function FillSummary({ fill }: { fill: Fill }) {
+  const config = fillConfig[fill.state];
 
-function getFillState(
-  used: number,
-  total: number,
-  tolerance: number,
-  count: number,
-): FillState {
-  if (count === 0) return "empty";
-  const delta = used - total;
-  if (Math.abs(delta) <= tolerance) return "complete";
-  return delta > 0 ? "over" : "incomplete";
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span
+        className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold max-md:min-h-7 max-md:px-3 max-md:text-xs ${config.badge}`}
+      >
+        {config.label}
+      </span>
+      {fill.state === "incomplete" && (
+        <span className="text-[11px] text-text-muted max-md:text-xs">
+          faltan {formatClock(fill.remaining)}
+        </span>
+      )}
+      {fill.state === "over" && (
+        <span className="text-[11px] text-danger max-md:text-xs">
+          sobran {formatClock(-fill.remaining)}
+        </span>
+      )}
+    </div>
+  );
 }
 
 function ContentProgress({
   blockSeconds,
+  fill,
   progress,
-  toleranceSeconds,
 }: {
   blockSeconds: number;
+  fill: Fill;
   progress: BlockProgress | undefined;
-  toleranceSeconds: number;
 }) {
-  const used = Number(progress?.contents_seconds ?? 0);
-  const count = progress?.contents_count ?? 0;
-  const percent = blockSeconds > 0 ? Math.round((used / blockSeconds) * 100) : 0;
-  const state = getFillState(used, blockSeconds, toleranceSeconds, count);
-  const config = fillConfig[state];
-  const remaining = blockSeconds - used;
+  const config = fillConfig[fill.state];
 
   return (
-    <div className="grid min-w-[200px] gap-1.5">
-      <div className="flex items-center gap-2">
-        <span
-          className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${config.badge}`}
-        >
-          {config.label}
-        </span>
-        {state === "incomplete" && (
-          <span className="text-[11px] text-text-muted">
-            faltan {formatClock(remaining)}
-          </span>
-        )}
-        {state === "over" && (
-          <span className="text-[11px] text-danger">
-            sobran {formatClock(-remaining)}
-          </span>
-        )}
+    <div className="grid min-w-[200px] gap-1.5 max-md:min-w-0">
+      {/* En móvil el estado ya aparece como etiqueta arriba. */}
+      <div className="max-md:hidden">
+        <FillSummary fill={fill} />
       </div>
 
       <div
-        aria-label={`Contenido registrado: ${percent}% del bloque`}
+        aria-label={`Contenido registrado: ${fill.percent}% del bloque`}
         aria-valuemax={100}
         aria-valuemin={0}
-        aria-valuenow={Math.min(percent, 100)}
-        className="h-2 overflow-hidden rounded-full bg-surface-muted ring-1 ring-border"
+        aria-valuenow={Math.min(fill.percent, 100)}
+        className="h-2 overflow-hidden rounded-full bg-surface-muted ring-1 ring-border max-md:h-2.5"
         role="progressbar"
       >
         <div
           className={`h-full ${config.bar}`}
-          style={{ width: `${Math.min(percent, 100)}%` }}
+          style={{ width: `${Math.min(fill.percent, 100)}%` }}
         />
       </div>
 
-      <p className="text-[11px] text-text-muted">
-        {formatClock(used)} de {formatClock(blockSeconds)} ({percent}%)
+      <p className="text-[11px] text-text-muted max-md:text-sm">
+        {formatClock(fill.used)} de {formatClock(blockSeconds)} ({fill.percent}%)
       </p>
-      {count > 0 && (
-        <p className="text-[11px] text-text-subtle">
-          {count} {count === 1 ? "contenido" : "contenidos"} ·{" "}
+      {fill.count > 0 && (
+        <p className="text-[11px] text-text-subtle max-md:text-xs">
+          {fill.count} {fill.count === 1 ? "contenido" : "contenidos"} ·{" "}
           {progress?.assigned_count ?? 0} con editor ·{" "}
           {progress?.accepted_count ?? 0} aceptados
         </p>

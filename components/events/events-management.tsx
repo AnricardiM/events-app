@@ -26,11 +26,14 @@ const fieldControl =
   "h-[42px] w-full rounded-lg border border-border bg-surface text-[13px] text-text focus-visible:border-primary";
 
 const rowButton =
-  "min-h-[30px] cursor-pointer whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55";
+  "inline-flex min-h-[30px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55";
+// Botón solo con icono: cuadrado de 44px en móvil.
+const iconMobile = "max-md:size-11 max-md:min-h-0 max-md:px-0";
+// Botón con icono y texto: en móvil ocupa el espacio libre de la fila.
+const labelMobile = "max-md:min-h-11 max-md:flex-1 max-md:px-3 max-md:text-sm";
 
 const cell =
-  "align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
-
+  "min-w-0 align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
 
 export function EventsManagement({
   canDelete,
@@ -91,7 +94,9 @@ export function EventsManagement({
             onClick={() => setEditingEvent("new")}
             type="button"
           >
-            <span aria-hidden="true" className="text-[19px] leading-none">+</span>
+            <span aria-hidden="true" className="text-[19px] leading-none">
+              +
+            </span>
             Crear evento
           </button>
         </header>
@@ -101,7 +106,23 @@ export function EventsManagement({
           className="mb-5 flex flex-wrap items-end gap-3.5 rounded-xl border border-border bg-surface p-4 max-sm:p-3"
         >
           <label className="relative min-w-[200px] flex-1 max-md:basis-full">
-            {/* (deja aquí el mismo icono de lupa) */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-text-subtle"
+            >
+              <svg
+                fill="none"
+                height="18"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="1.8"
+                viewBox="0 0 24 24"
+                width="18"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+            </span>
             <span className="sr-only">Buscar por nombre</span>
             <input
               className={`${fieldControl} pl-[38px] pr-3 placeholder:text-text-subtle`}
@@ -112,7 +133,7 @@ export function EventsManagement({
             />
           </label>
 
-          <label className="grid min-w-[190px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1">
+          <label className="grid min-w-[190px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1 max-md:text-xs max-sm:basis-full">
             <span>Cronograma</span>
             <select
               className={`${fieldControl} pl-[11px] pr-[30px]`}
@@ -136,8 +157,10 @@ export function EventsManagement({
           {notice && <NoticeBanner className="mx-[18px] mt-3.5" notice={notice} />}
 
           <div className="flex min-h-[68px] items-center justify-between gap-4 border-b border-border px-[22px] max-sm:min-h-[60px] max-sm:px-4">
-            <h2 className="text-[15px] font-semibold text-text">Eventos</h2>
-            <p className="text-xs text-text-muted">
+            <h2 className="text-[15px] font-semibold text-text max-md:text-base">
+              Eventos
+            </h2>
+            <p className="text-xs text-text-muted max-md:text-sm">
               {filteredEvents.length} de {events.length}{" "}
               {events.length === 1 ? "evento" : "eventos"}
             </p>
@@ -182,37 +205,50 @@ export function EventsManagement({
                 </thead>
                 <tbody className="max-md:block">
                   {filteredEvents.map((event) => (
+                    // Móvil, de arriba hacia abajo (orden visual con `order`; el DOM no cambia):
+                    //  1. Estado del cronograma (etiqueta)
+                    //  2. Nombre y fechas límite
+                    //  3. Período
+                    //  4. Botones, en una fila al final
                     <tr
-                      className="max-md:grid max-md:gap-y-3 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
+                      className="max-md:grid max-md:grid-cols-1 max-md:items-start max-md:gap-y-3 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
                       key={event.id}
                     >
-                      <td className={cell}>
-                        <strong className="block text-xs font-semibold text-text">
+                      <td className={`${cell} max-md:order-2`}>
+                        <strong className="block text-xs font-semibold text-text max-md:text-base">
                           {event.name}
                         </strong>
                         {(event.registration_deadline || event.editing_deadline) && (
-                          <span className="mt-1 block text-[11px] text-text-subtle">
+                          <span className="mt-1 block text-[11px] leading-snug text-text-subtle max-md:text-xs">
                             {event.registration_deadline &&
                               `Registro hasta ${dateFormatter.format(new Date(event.registration_deadline))}`}
-                            {event.registration_deadline && event.editing_deadline && " · "}
+                            {event.registration_deadline &&
+                              event.editing_deadline &&
+                              " · "}
                             {event.editing_deadline &&
                               `Edición hasta ${dateFormatter.format(new Date(event.editing_deadline))}`}
                           </span>
                         )}
                       </td>
-                      <td className={`${cell} text-[11px] text-text-muted`}>
+                      <td
+                        className={`${cell} text-[11px] text-text-muted max-md:order-3 max-md:text-sm`}
+                      >
+                        <span className="text-text-subtle md:hidden">Inicio </span>
                         {dateTimeFormatter.format(new Date(event.starts_at))}
-                        <br />
+                        <span> </span>
+                        <span className="text-text-subtle md:hidden">Fin </span>
                         {dateTimeFormatter.format(new Date(event.ends_at))}
                       </td>
-                      <td className={cell}>
+                      <td className={`${cell} max-md:order-1`}>
                         <span
-                          className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${statusConfig[event.status].className}`}
+                          className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold max-md:min-h-7 max-md:px-3 max-md:text-xs ${statusConfig[event.status].className}`}
                         >
                           {statusConfig[event.status].label}
                         </span>
                       </td>
-                      <td className={cell}>
+                      <td
+                        className={`${cell} max-md:order-4 max-md:border-t max-md:border-border max-md:pt-3.5`}
+                      >
                         <EventActions
                           canDelete={canDelete}
                           event={event}
@@ -244,6 +280,7 @@ export function EventsManagement({
   );
 }
 
+// Móvil: editar (icono) · cronograma (icono + texto, ocupa el espacio libre) · eliminar (icono).
 function EventActions({
   canDelete,
   event,
@@ -278,29 +315,45 @@ function EventActions({
   return (
     <div
       aria-label="Acciones del evento"
-      className="flex justify-end gap-[7px] max-md:flex-wrap max-md:justify-start"
+      className="flex items-center gap-2 md:justify-end md:gap-[7px]"
       role="group"
     >
       <button
         aria-label={`Editar datos de ${event.name}`}
-        className={rowButton}
+        className={`${rowButton} ${iconMobile}`}
         disabled={isPending}
         onClick={onEdit}
+        title="Editar"
         type="button"
       >
         <Icon name="edit" />
       </button>
-      <Link className={`${rowButton} inline-flex items-center`} href={`/eventos/${event.id}/cronograma`}>
+      <Link
+        aria-label={`Ver cronograma de ${event.name}`}
+        className={`${rowButton} ${labelMobile}`}
+        href={`/eventos/${event.id}/cronograma`}
+      >
+        <span aria-hidden="true" className="md:hidden">
+          <Icon name="calendar" />
+        </span>
         Cronograma
       </Link>
       {canDelete && (
         <button
-          className={`${rowButton} border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger`}
+          aria-label={`Eliminar ${event.name}`}
+          className={`${rowButton} ${iconMobile} border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger`}
           disabled={isPending}
           onClick={handleDelete}
+          title="Eliminar"
           type="button"
         >
-          {isPending ? "Eliminando..." : "Eliminar"}
+          {/* Escritorio: texto. Móvil: solo icono. */}
+          <span className="max-md:hidden">
+            {isPending ? "Eliminando..." : "Eliminar"}
+          </span>
+          <span className="md:hidden">
+            <Icon name="trash" />
+          </span>
         </button>
       )}
     </div>
@@ -319,7 +372,7 @@ function NoticeBanner({
   return (
     <p
       aria-live="polite"
-      className={`rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal ${
+      className={`rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal max-md:text-xs ${
         isError ? "bg-danger-soft text-danger" : "bg-success-soft text-success"
       } ${className}`}
       role={isError ? "alert" : "status"}
@@ -351,7 +404,9 @@ function EmptyState({
         </span>
       )}
       <h3 className="text-sm font-semibold text-text">{title}</h3>
-      <p className="mt-2 text-xs leading-relaxed text-text-muted">{text}</p>
+      <p className="mt-2 text-xs leading-relaxed text-text-muted max-md:text-sm">
+        {text}
+      </p>
       {children}
     </div>
   );

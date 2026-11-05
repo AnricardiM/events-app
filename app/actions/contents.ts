@@ -169,6 +169,10 @@ export async function setContentAccepted(
   });
   if (error) return { success: false, message: explainContentError(error.message) };
 
+  if (!accepted) {
+    setContentEdited(contentId, false);
+  }
+
   revalidatePath("/contenidos");
   revalidatePath("/eventos/[eventId]/cronograma", "page");
   return {

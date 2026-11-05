@@ -27,11 +27,12 @@ const primaryButton =
 const fieldControl =
   "h-[42px] w-full rounded-lg border border-border bg-surface text-[13px] text-text focus-visible:border-primary";
 
+// En móvil los botones de fila son cuadrados de 40px (solo icono).
 const rowButton =
-  "min-h-[30px] cursor-pointer whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55";
+  "inline-flex min-h-[30px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[7px] border border-border bg-surface px-[9px] text-[11px] text-text-muted hover:enabled:border-navy-300 hover:enabled:text-primary disabled:cursor-not-allowed disabled:opacity-55 max-md:size-10 max-md:min-h-0 max-md:px-0";
 
 const cell =
-  "align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
+  "min-w-0 align-middle text-xs md:border-t md:border-border md:px-4 md:py-3 md:first:pl-[22px] md:last:pr-[22px]";
 
 export function UsersManagement({ users }: { users: ManagedProfile[] }) {
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -126,7 +127,8 @@ export function UsersManagement({ users }: { users: ManagedProfile[] }) {
             />
           </label>
 
-          <label className="grid min-w-[155px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1">
+          {/* En pantallas muy angostas cada filtro ocupa su propia fila, para que el texto no se corte. */}
+          <label className="grid min-w-[155px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1 max-md:text-xs max-sm:basis-full">
             <span>Rol</span>
             <select
               className={`${fieldControl} pl-[11px] pr-[30px]`}
@@ -144,7 +146,7 @@ export function UsersManagement({ users }: { users: ManagedProfile[] }) {
             </select>
           </label>
 
-          <label className="grid min-w-[155px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1">
+          <label className="grid min-w-[155px] gap-1.5 text-[11px] font-semibold text-text-muted max-md:min-w-0 max-md:flex-1 max-md:text-xs max-sm:basis-full">
             <span>Estado</span>
             <select
               className={`${fieldControl} pl-[11px] pr-[30px]`}
@@ -167,8 +169,10 @@ export function UsersManagement({ users }: { users: ManagedProfile[] }) {
           {notice && <NoticeBanner className="mx-[18px] mt-3.5" notice={notice} />}
 
           <div className="flex min-h-[68px] items-center justify-between gap-4 border-b border-border px-[22px] max-sm:min-h-[60px] max-sm:px-4">
-            <h2 className="text-[15px] font-semibold text-text">Usuarios</h2>
-            <p className="text-xs text-text-muted">
+            <h2 className="text-[15px] font-semibold text-text max-md:text-base">
+              Usuarios
+            </h2>
+            <p className="text-xs text-text-muted max-md:text-sm">
               {filteredUsers.length} de {users.length}{" "}
               {users.length === 1 ? "usuario" : "usuarios"}
             </p>
@@ -231,28 +235,31 @@ export function UsersManagement({ users }: { users: ManagedProfile[] }) {
                 </thead>
                 <tbody className="max-md:block">
                   {filteredUsers.map((user) => (
+                    // Móvil: fila 1 = rol (izquierda) y estado (derecha);
+                    // fila 2 = identidad (izquierda) y acciones (derecha).
+                    // El orden visual se define con `order`, el DOM no cambia.
                     <tr
-                      className="max-md:grid max-md:grid-cols-[1fr_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-3 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
+                      className="max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-3.5 max-md:border-t max-md:border-border max-md:px-4 max-md:py-4"
                       key={user.id}
                     >
-                      <td className={`${cell} max-md:col-span-2`}>
+                      <td className={`${cell} max-md:order-2 max-md:col-start-1`}>
                         <UserIdentity user={user} />
                       </td>
-                      <td className={cell}>
+                      <td className={`${cell} max-md:order-1 max-md:col-start-1`}>
                         <RoleBadges roles={user.roles} />
                       </td>
-                      <td className={`${cell} max-md:justify-self-end`}>
+                      <td
+                        className={`${cell} max-md:order-1 max-md:col-start-2 max-md:justify-self-end`}
+                      >
                         <StatusBadge isActive={user.is_active} />
                       </td>
+                      {/* La fecha de alta no se muestra en móvil. */}
                       <td
-                        className={`${cell} whitespace-nowrap text-[11px] text-text-subtle max-md:border-t max-md:border-border max-md:pt-3`}
+                        className={`${cell} whitespace-nowrap text-[11px] text-text-subtle max-md:hidden`}
                       >
-                        <span className="md:hidden">Alta </span>
                         {dateFormatter.format(new Date(user.created_at))}
                       </td>
-                      <td
-                        className={`${cell} max-md:border-t max-md:border-border max-md:pt-3`}
-                      >
+                      <td className={`${cell} max-md:order-2 max-md:col-start-2`}>
                         <UserActions
                           isActive={user.is_active}
                           onManage={() => setEditingUser(user)}
@@ -300,7 +307,7 @@ function NoticeBanner({
   return (
     <p
       aria-live="polite"
-      className={`rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal ${
+      className={`rounded-[7px] px-[11px] py-[9px] text-[11px] leading-normal max-md:text-xs ${
         isError ? "bg-danger-soft text-danger" : "bg-success-soft text-success"
       } ${className}`}
       role={isError ? "alert" : "status"}
@@ -332,7 +339,9 @@ function EmptyState({
         </span>
       )}
       <h3 className="text-sm font-semibold text-text">{title}</h3>
-      <p className="mt-2 text-xs leading-relaxed text-text-muted">{text}</p>
+      <p className="mt-2 text-xs leading-relaxed text-text-muted max-md:text-sm">
+        {text}
+      </p>
       {children}
     </div>
   );
@@ -350,10 +359,10 @@ function UserIdentity({ user }: { user: ManagedProfile }) {
         {getInitials(displayName)}
       </span>
       <span className="grid min-w-0 gap-1">
-        <strong className="max-w-[260px] truncate text-xs font-semibold text-text">
+        <strong className="max-w-[260px] truncate text-xs font-semibold text-text max-md:max-w-full max-md:text-sm">
           {displayName}
         </strong>
-        <span className="max-w-[260px] truncate text-[11px] text-text-subtle">
+        <span className="max-w-[260px] truncate text-[11px] text-text-subtle max-md:max-w-full max-md:text-xs">
           {user.email}
         </span>
       </span>
@@ -363,14 +372,18 @@ function UserIdentity({ user }: { user: ManagedProfile }) {
 
 function RoleBadges({ roles }: { roles: AppRole[] }) {
   if (roles.length === 0) {
-    return <span className="text-[11px] text-text-subtle">Sin rol asignado</span>;
+    return (
+      <span className="text-[11px] text-text-subtle max-md:text-xs">
+        Sin rol asignado
+      </span>
+    );
   }
 
   return (
     <div className="flex flex-wrap gap-1.5">
       {roles.map((role) => (
         <span
-          className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${roleStyles[role]}`}
+          className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold max-md:min-h-7 max-md:px-3 max-md:text-xs ${roleStyles[role]}`}
           key={role}
         >
           {roleLabels[role]}
@@ -383,7 +396,7 @@ function RoleBadges({ roles }: { roles: AppRole[] }) {
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return (
     <span
-      className={`inline-flex min-h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold ${
+      className={`inline-flex min-h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-[9px] text-[10px] font-semibold max-md:min-h-7 max-md:px-3 max-md:text-xs ${
         isActive
           ? "bg-success-soft text-success"
           : "bg-surface-muted text-text-subtle ring-1 ring-border"
@@ -394,6 +407,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     </span>
   );
 }
+
 
 function UserActions({
   isActive,
@@ -430,10 +444,12 @@ function UserActions({
     });
   }
 
+  const statusLabel = `${isActive ? "Desactivar" : "Activar"} a ${userEmail}`;
+
   return (
     <div
       aria-label="Acciones de usuario"
-      className="flex justify-end gap-[7px] max-md:justify-start max-md:flex-wrap"
+      className="flex justify-end gap-[7px] max-md:gap-2"
       role="group"
     >
       <button
@@ -443,18 +459,27 @@ function UserActions({
         onClick={onManage}
         type="button"
       >
-        <Icon name="edit" />
+       <Icon name="edit" />
       </button>
       <button
-        aria-label={`${isActive ? "Desactivar" : "Activar"} a ${userEmail}`}
+        aria-label={statusLabel}
         className={`${rowButton} ${
-          isActive ? "border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger" : ""
+          isActive
+            ? "border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger"
+            : ""
         }`}
         disabled={isPending}
         onClick={handleStatusChange}
+        title={isActive ? "Desactivar" : "Activar"}
         type="button"
       >
-        {isPending ? "Procesando..." : isActive ? "Desactivar" : "Activar"}
+        {/* Escritorio: texto. Móvil: solo icono, para ocupar menos espacio. */}
+        <span className="max-md:hidden">
+          {isPending ? "Procesando..." : isActive ? "Desactivar" : "Activar"}
+        </span>
+        <span className="md:hidden">
+           <Icon name="power" />
+        </span>
       </button>
     </div>
   );
