@@ -12,6 +12,7 @@ import type { VisibleNavItem } from "@/lib/navigation.ts";
 import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+import { HelpAssistant } from "@/components/help/help-assistant";
 
 const WorkspaceProfileContext = createContext("");
 
@@ -121,6 +122,7 @@ export function WorkspaceShell({
           {children}
         </main>
       </WorkspaceProfileContext.Provider>
+        <HelpAssistant />
     </div>
   );
 }
