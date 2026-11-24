@@ -12,6 +12,14 @@ import { explainContentError } from "@/lib/services/content-errors";
 
 type ActionResult = { success: boolean; message: string };
 
+// Todas las vistas que muestran contenidos.
+function refreshViews() {
+  revalidatePath("/contenidos");
+  revalidatePath("/tareas");
+  revalidatePath("/dashboard");
+  revalidatePath("/eventos/[eventId]/cronograma", "page");
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -43,6 +51,10 @@ export async function saveContent(
   const minutes = readInt(formData, "duration_minutes");
   const seconds = readInt(formData, "duration_seconds");
   const filesCount = readInt(formData, "files_count");
+  // El formulario envía "true"/"false". Si el campo no viene, se asume que
+  // el contenido necesita edición (valor por defecto seguro).
+  const needsValues = formData.getAll("needs_editing");
+  const needsEditing = needsValues.length === 0 || needsValues.includes("true");
 
   if (
     typeof fileName !== "string" ||
@@ -97,6 +109,7 @@ export async function saveContent(
     p_source: source,
     p_duration_seconds: duration,
     p_files_count: filesCount,
+    p_needs_editing: needsEditing,
   };
 
   const { error } = contentId
@@ -105,8 +118,7 @@ export async function saveContent(
 
   if (error) return { success: false, message: explainContentError(error.message) };
 
-  revalidatePath("/contenidos");
-  revalidatePath("/eventos/[eventId]/cronograma", "page");
+  refreshViews();
   return {
     success: true,
     message: contentId ? "Contenido actualizado." : "Contenido registrado.",
@@ -125,7 +137,7 @@ export async function deleteContent(contentId: string): Promise<ActionResult> {
   });
   if (error) return { success: false, message: explainContentError(error.message) };
 
-  revalidatePath("/contenidos");
+  refreshViews();
   return { success: true, message: "Contenido eliminado." };
 }
 
@@ -145,8 +157,7 @@ export async function assignContentEditor(
   });
   if (error) return { success: false, message: explainContentError(error.message) };
 
-  revalidatePath("/contenidos");
-  revalidatePath("/eventos/[eventId]/cronograma", "page");
+  refreshViews();
   return {
     success: true,
     message: editorId ? "Editor asignado." : "Se quitó la asignación del editor.",
@@ -169,15 +180,10 @@ export async function setContentAccepted(
   });
   if (error) return { success: false, message: explainContentError(error.message) };
 
-  if (!accepted) {
-    setContentEdited(contentId, false);
-  }
-
-  revalidatePath("/contenidos");
-  revalidatePath("/eventos/[eventId]/cronograma", "page");
+  refreshViews();
   return {
     success: true,
-    message: accepted ? "Contenido aceptado." : "Se quitó la aceptación.",
+    message: accepted ? "Contenido aprobado." : "Se quitó la aprobación.",
   };
 }
 
@@ -197,10 +203,56 @@ export async function setContentEdited(
   });
   if (error) return { success: false, message: explainContentError(error.message) };
 
-  revalidatePath("/contenidos");
-  revalidatePath("/eventos/[eventId]/cronograma", "page");
+  refreshViews();
   return {
     success: true,
     message: edited ? "Contenido marcado como editado." : "Se quitó la marca de editado.",
   };
+}
+export async function rejectContent(
+  contentId: string,
+  comment: string,
+): Promise<ActionResult> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { success: false, message: auth.error };
+  if (!UUID_RE.test(contentId)) {
+    return { success: false, message: "El identificador no es válido." };
+  }
+
+  const cleanComment = typeof comment === "string" ? comment.trim() : "";
+  if (cleanComment.length < 3) {
+    return { success: false, message: "Escribe un comentario para el editor." };
+  }
+  if (cleanComment.length > 1000) {
+    return { success: false, message: "El comentario no puede superar los 1000 caracteres." };
+  }
+
+  const { error } = await auth.supabase.rpc("reject_content", {
+    p_content_id: contentId,
+    p_comment: cleanComment,
+  });
+  if (error) return { success: false, message: explainContentError(error.message) };
+
+  refreshViews();
+  return { success: true, message: "Contenido rechazado. El editor verá tu comentario." };
+}
+
+export async function moveContent(
+  contentId: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { success: false, message: auth.error };
+  if (!UUID_RE.test(contentId) || (direction !== "up" && direction !== "down")) {
+    return { success: false, message: "La solicitud no es válida." };
+  }
+
+  const { error } = await auth.supabase.rpc("move_content", {
+    p_content_id: contentId,
+    p_direction: direction,
+  });
+  if (error) return { success: false, message: explainContentError(error.message) };
+
+  refreshViews();
+  return { success: true, message: "Orden actualizado." };
 }

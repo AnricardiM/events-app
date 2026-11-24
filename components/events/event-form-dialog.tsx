@@ -161,6 +161,23 @@ export function EventFormDialog({
             </label>
           </div>
 
+          <label className="flex items-start gap-[9px] text-xs font-semibold text-text-muted">
+            <input
+              className="mt-0.5 accent-primary"
+              defaultChecked={event?.is_online ?? false}
+              disabled={isPending}
+              name="is_online"
+              type="checkbox"
+              value="true"
+            />
+            <span>
+              Evento online
+              <span className="mt-0.5 block text-[11px] font-normal text-text-subtle">
+                Márcalo si el evento se transmite o se realiza en línea.
+              </span>
+            </span>
+          </label>
+
           <p className={noteClass} role="note">
             Las horas se interpretan en la zona horaria configurada en el
             sistema ({timezone}). Las fechas límite son opcionales.

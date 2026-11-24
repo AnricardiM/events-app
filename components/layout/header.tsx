@@ -41,14 +41,7 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-[22px] max-md:gap-2 max-[520px]:gap-1">
-        <button aria-label="Notificaciones" className={iconButton} type="button">
-          <Icon className="size-[21px]" name="bell" />
-          <span
-            aria-hidden="true"
-            className="absolute right-2 top-2 size-[7px] rounded-full border border-surface bg-danger"
-          />
-        </button>
-
+    
         <div className="flex min-w-0 items-center gap-2.5">
           {avatarUrl ? (
             <Image

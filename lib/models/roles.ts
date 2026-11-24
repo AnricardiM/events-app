@@ -6,28 +6,28 @@
 
 export const appRoles = [
   "admin",
-  "revisor",
-  "editor",
-  "programador",
-  "ingresador",
+  "review",
+  "edit",
+  "programmer",
+  "enter",
 ] as const;
 
 export type AppRole = (typeof appRoles)[number];
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
-  revisor: "Revisor",
-  editor: "Editor",
-  programador: "Programador",
-  ingresador: "Ingresador",
+  review: "Revisor",
+  edit: "Editor",
+  programmer: "Programador",
+  enter: "Ingresador",
 };
 
 /** Roles que no se pueden combinar con ningún otro. */
-const exclusiveRoles: readonly AppRole[] = ["editor"];
+const exclusiveRoles: readonly AppRole[] = ["edit"];
 
 /** Pares de roles incompatibles entre sí. */
 const incompatiblePairs: readonly (readonly [AppRole, AppRole])[] = [
-  ["admin", "programador"],
+  ["admin", "programmer"],
 ];
 
 const roleSet: ReadonlySet<string> = new Set(appRoles);

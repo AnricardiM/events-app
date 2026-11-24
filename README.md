@@ -1,66 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Events
 
-## Getting Started
+Aplicación web para organizar eventos y gestionar el contenido que se prepara
+para ellos. La interfaz está en español y el acceso está restringido a usuarios
+autenticados y activos.
 
-First, run the development server:
+## ¿Qué es?
+
+Events reúne en un solo lugar la gestión de eventos, sus cronogramas y los
+contenidos registrados para cada bloque. También incluye gestión de usuarios y
+roles, configuración del sistema y un asistente de ayuda opcional.
+
+La aplicación está construida con Next.js 16, React 19 y TypeScript. Supabase
+provee autenticación y base de datos. Las acciones disponibles dependen del rol
+del usuario; la autorización se valida en el servidor.
+
+## ¿Cómo funciona?
+
+1. El usuario inicia sesión con correo y contraseña de Supabase Auth.
+2. Una vez autenticado, puede acceder a las secciones permitidas para su cuenta.
+3. En **Eventos**, los usuarios autorizados crean y mantienen eventos.
+   Cada evento puede tener bloques en un cronograma.
+4. En **Recepción**, los usuarios autorizados registran contenidos y archivos,
+   que pueden asignarse para edición y revisión.
+5. Los administradores pueden gestionar usuarios y roles, y ajustar la
+   configuración general.
+6. El asistente de ayuda responde preguntas sobre el uso de la aplicación si
+   se configura la integración opcional con Gemini.
+
+Las rutas de **Mis tareas** y **Cronograma** general todavía son módulos en
+desarrollo. El cronograma de cada evento sí está disponible desde la sección
+Eventos.
+
+## ¿Qué necesito para comenzar?
+
+- Node.js 20.9.0 o posterior y npm.
+- Un proyecto de Supabase configurado para esta aplicación.
+- La base de datos de Supabase preparada con las tablas, funciones, políticas
+  de acceso y datos iniciales que utiliza la aplicación. Este repositorio no
+  incluye migraciones SQL para crear ese esquema.
+- Un usuario activo con permisos para iniciar sesión. Habilita el proveedor
+  **Email** en Supabase Auth.
+
+### 1. Instalar dependencias
+
+Desde la carpeta del proyecto, ejecuta:
+
+```bash
+npm ci
+```
+
+### 2. Configurar el entorno local
+
+Crea un archivo `.env.local` en la raíz y agrega las variables necesarias:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+
+# Opcional: necesario para crear usuarios desde la sección Usuarios.
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+
+# Opcionales: habilitan el asistente de ayuda con Gemini.
+GEMINI_API_KEY=<gemini-api-key>
+# GEMINI_MODEL=gemini-flash-latest
+```
+
+Obtén los valores de Supabase y Gemini desde sus respectivos proyectos. No
+incluyas credenciales reales en el repositorio ni las compartas. `.env.local`
+está excluido del control de versiones. La clave `SUPABASE_SERVICE_ROLE_KEY`
+debe permanecer exclusivamente en el servidor: no la renombres con el prefijo
+`NEXT_PUBLIC_` ni la expongas al navegador.
+
+Las dos variables `NEXT_PUBLIC_SUPABASE_*` son necesarias para iniciar sesión y
+usar la aplicación. `SUPABASE_SERVICE_ROLE_KEY` solo es necesaria para crear
+usuarios desde la aplicación. Sin `GEMINI_API_KEY`, el resto de la aplicación
+puede utilizarse, pero el asistente no estará disponible.
+
+### 3. Iniciar en modo desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000). La página inicial muestra
+el formulario de acceso; después de iniciar sesión se abre el panel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Secciones disponibles
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Inicio** (`/dashboard`): panel principal.
+- **Eventos** (`/eventos`): gestión de eventos y acceso al cronograma de cada
+  evento (`/eventos/<id>/cronograma`).
+- **Recepción** (`/contenidos`): registro y flujo de revisión de contenidos.
+- **Usuarios** (`/usuarios`): administración de usuarios y roles; requiere rol
+  de administrador.
+- **Administración** (`/administracion`): configuración del sistema; requiere
+  rol de administrador.
+- **Mis tareas** (`/tareas`) y **Cronograma** (`/cronograma`): módulos
+  informativos aún no implementados.
 
-## Learn More
+## Comandos
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Inicio de sesión con Supabase
-
-La pantalla inicial autentica con correo y contraseña mediante Supabase Auth. Para
-conectar el proyecto:
-
-1. Copia `.env.example` a `.env.local`.
-2. En Supabase, copia la URL del proyecto y su publishable key en
-   `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-3. Habilita el proveedor Email y crea los usuarios desde **Authentication >
-   Users**. El formulario permite iniciar sesión; el registro se administra
-   desde Supabase.
-4. Ejecuta `npm run dev` y visita `/login`. Las rutas del sistema (`/dashboard`,
-   `/usuarios`, `/ingresos`, `/tareas`, `/cronograma` y `/administracion`)
-   requieren una sesión válida y comparten el header y el menú lateral. La ruta
-   `/` redirige a `/login`.
-
-No uses la `service_role` key en estas variables ni en el navegador.
-
-La creación administrativa de usuarios en `/usuarios` también requiere
-`SUPABASE_SERVICE_ROLE_KEY` en el entorno del servidor. Esta credencial se usa
-exclusivamente en una Server Action; nunca la publiques con el prefijo
-`NEXT_PUBLIC_` ni la envíes al cliente. En Vercel, configúrala como variable de
-entorno privada para el entorno correspondiente.
-
-Los usuarios nuevos se crean con el correo confirmado y una contraseña inicial
-definida por el administrador. Comparte esa contraseña únicamente mediante un
-canal seguro. Las políticas actuales no permiten editar el nombre ni el correo
-de perfiles existentes; en su lugar, el formulario los muestra como solo
-lectura. La acción de desactivar no elimina físicamente cuentas de Auth.
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev    # servidor de desarrollo
+npm run lint   # análisis estático
+npm run build  # compilación de producción
+npm run start  # servidor de producción (después de compilar)
+```

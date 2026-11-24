@@ -218,6 +218,9 @@ export function EventsManagement({
                         <strong className="block text-xs font-semibold text-text max-md:text-base">
                           {event.name}
                         </strong>
+                        <span className="mt-1 inline-flex min-h-5 items-center rounded-full bg-primary-soft px-2 text-[10px] font-semibold text-primary-soft-text max-md:text-xs">
+                          {event.is_online ? "Online" : "Presencial"}
+                        </span>
                         {(event.registration_deadline || event.editing_deadline) && (
                           <span className="mt-1 block text-[11px] leading-snug text-text-subtle max-md:text-xs">
                             {event.registration_deadline &&

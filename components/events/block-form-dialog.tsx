@@ -142,6 +142,18 @@ export function BlockFormDialog({
             </label>
           </div>
 
+          <label className={labelClass}>
+            Encargado (opcional)
+            <input
+              className={inputClass}
+              defaultValue={block?.manager_name ?? ""}
+              disabled={isPending}
+              maxLength={120}
+              name="manager_name"
+              placeholder="Nombre de la persona a cargo"
+            />
+          </label>
+
           <p className={noteClass} role="note">
             El bloque debe quedar dentro del evento y no solaparse con otros
             bloques. Las horas se interpretan en la zona horaria {timezone}.

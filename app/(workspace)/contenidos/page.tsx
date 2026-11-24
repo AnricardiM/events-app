@@ -6,25 +6,27 @@ import { getContentData } from "@/lib/services/contents";
 import { ContentsManagement } from "@/components/contents/contents-management";
 
 export default async function ContenidosPage() {
-   await connection();
+  await connection();
   const supabase = await createClient(await cookies());
 
   const { data: claimsData } = await supabase.auth.getClaims();
-const currentUserId = claimsData?.claims?.sub ?? null;
+  const currentUserId = claimsData?.claims?.sub ?? null;
 
-  const [active, admin, ingresador, revisor] = await Promise.all([
+  const [active, admin, enter, review, programmer] = await Promise.all([
     supabase.rpc("is_active_user"),
     supabase.rpc("has_role", { p_role: "admin" }),
-    supabase.rpc("has_role", { p_role: "ingresador" }),
-    supabase.rpc("has_role", { p_role: "revisor" }),
+    supabase.rpc("has_role", { p_role: "enter" }),
+    supabase.rpc("has_role", { p_role: "review" }),
+    supabase.rpc("has_role", { p_role: "programmer" }),
   ]);
 
-  if (active.error || admin.error || ingresador.error || revisor.error) {
+  if (active.error || admin.error || enter.error || review.error || programmer.error) {
     console.error("No se pudieron verificar los permisos:", {
       active: active.error,
       admin: admin.error,
-      ingresador: ingresador.error,
-      revisor: revisor.error,
+      enter: enter.error,
+      review: review.error,
+      programmer: programmer.error,
     });
     return (
       <section className="users-inline-message" role="alert">
@@ -34,6 +36,8 @@ const currentUserId = claimsData?.claims?.sub ?? null;
   }
 
   if (!active.data) redirect("/dashboard");
+  // Recepción es solo para quien registra contenido; el resto trabaja desde Tareas.
+  if (!admin.data && !enter.data) redirect("/dashboard");
 
   const { contents, events, blocks, editors, error } = await getContentData(supabase);
 
@@ -50,16 +54,16 @@ const currentUserId = claimsData?.claims?.sub ?? null;
 
   return (
     <ContentsManagement
-    blocks={blocks}
-    canAccept={isAdmin || Boolean(revisor.data)}
-    canAssign={isAdmin}
-    canDelete={isAdmin}
-    canRegister={isAdmin || Boolean(ingresador.data)}
-    contents={contents}
-    currentUserId={currentUserId}
-    editors={Array.isArray(editors) ? editors : []}
-    events={events}
-    isAdmin={isAdmin}
-/>
+      blocks={blocks}
+      canAccept={isAdmin || Boolean(review.data)}
+      canAssign={isAdmin || Boolean(programmer.data)}
+      canDelete={isAdmin}
+      canRegister={isAdmin || Boolean(enter.data)}
+      contents={contents}
+      currentUserId={currentUserId}
+      editors={Array.isArray(editors) ? editors : []}
+      events={events}
+      isAdmin={isAdmin}
+    />
   );
 }

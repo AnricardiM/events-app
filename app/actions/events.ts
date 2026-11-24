@@ -36,17 +36,9 @@ export async function saveEvent(
   const endsAt = formData.get("ends_at");
   const registration = formData.get("registration_deadline");
   const editing = formData.get("editing_deadline");
-
-  const startDate = startsAt.slice(0, 10);
-  if (registration && registration >= startDate) {
-    return { success: false, message: "La fecha límite de registro debe ser anterior al inicio del evento." };
-  }
-  if (editing && editing >= startDate) {
-    return { success: false, message: "La fecha límite de edición debe ser anterior al inicio del evento." };
-  }
-  if (registration && editing && editing <= registration) {
-    return { success: false, message: "La fecha límite de edición debe ser posterior a la de registro." };
-  }
+  // Checkbox "Evento online": llega "true" (o "on") solo si está marcado.
+  const isOnlineValue = formData.get("is_online");
+  const isOnline = isOnlineValue === "true" || isOnlineValue === "on";
 
   if (
     typeof name !== "string" ||
@@ -76,6 +68,17 @@ export async function saveEvent(
     return { success: false, message: "Las fechas límite no son válidas." };
   }
 
+  const startDate = startsAt.slice(0, 10);
+  if (registration && registration >= startDate) {
+    return { success: false, message: "La fecha límite de registro debe ser anterior al inicio del evento." };
+  }
+  if (editing && editing >= startDate) {
+    return { success: false, message: "La fecha límite de edición debe ser anterior al inicio del evento." };
+  }
+  if (registration && editing && editing <= registration) {
+    return { success: false, message: "La fecha límite de edición debe ser posterior a la de registro." };
+  }
+
   const { error } = await authorization.supabase.rpc("save_event", {
     p_event_id: eventId,
     p_name: cleanName,
@@ -83,6 +86,7 @@ export async function saveEvent(
     p_ends_at: endsAt,
     p_registration_deadline: registration || null,
     p_editing_deadline: editing || null,
+    p_is_online: isOnline,
   });
 
   if (error) {
@@ -90,6 +94,7 @@ export async function saveEvent(
   }
 
   revalidatePath("/eventos");
+  revalidatePath("/dashboard");
   return {
     success: true,
     message: eventId ? "Evento actualizado." : "Evento creado.",
@@ -114,5 +119,6 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   }
 
   revalidatePath("/eventos");
+  revalidatePath("/dashboard");
   return { success: true, message: "Evento eliminado." };
 }

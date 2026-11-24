@@ -2,7 +2,10 @@ const knownMessages = [
   "El usuario no es un editor activo",
   "Primero debe asignarse un editor",
   "Primero debe marcarse como editado",
-"El bloque no pertenece al evento",
+  "Este contenido no necesita edición",
+  "Solo se puede rechazar un contenido editado",
+  "El comentario es obligatorio",
+  "El bloque no pertenece al evento",
 ];
 
 export function explainContentError(message: string) {

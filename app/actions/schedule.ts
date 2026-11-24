@@ -27,6 +27,8 @@ export async function saveBlock(
   const name = formData.get("name");
   const startsAt = formData.get("starts_at");
   const duration = formData.get("duration_minutes");
+  // Encargado: opcional. Si el formulario no lo envía se guarda vacío.
+  const manager = formData.get("manager_name");
 
   if (
     typeof name !== "string" ||
@@ -49,12 +51,18 @@ export async function saveBlock(
     return { success: false, message: "La duración debe ser de 1 a 1440 minutos." };
   }
 
+  const cleanManager = typeof manager === "string" ? manager.trim() : "";
+  if (cleanManager.length > 120) {
+    return { success: false, message: "El nombre del encargado no puede superar los 120 caracteres." };
+  }
+
   const { error } = await authorization.supabase.rpc("save_block", {
     p_event_id: eventId,
     p_block_id: blockId,
     p_name: cleanName,
     p_starts_at: startsAt,
     p_duration_minutes: minutes,
+    p_manager_name: cleanManager || null,
   });
 
   if (error) {
@@ -63,6 +71,7 @@ export async function saveBlock(
 
   revalidatePath(`/eventos/${eventId}/cronograma`);
   revalidatePath("/eventos");
+  revalidatePath("/dashboard");
   return {
     success: true,
     message: blockId ? "Bloque actualizado." : "Bloque creado.",
@@ -91,5 +100,6 @@ export async function deleteBlock(
 
   revalidatePath(`/eventos/${eventId}/cronograma`);
   revalidatePath("/eventos");
+  revalidatePath("/dashboard");
   return { success: true, message: "Bloque eliminado." };
 }

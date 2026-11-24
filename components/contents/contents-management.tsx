@@ -20,6 +20,7 @@ import type {
   EventOption,
 } from "@/lib/services/contents";
 import { ContentFormDialog } from "./content-form-dialog";
+import { RejectDialog } from "./reject-dialog";
 import { Icon } from "../ui/icon";
 
 type Notice = { message: string; type: "success" | "error" };
@@ -85,6 +86,48 @@ function StatusPill({
   );
 }
 
+// Edición: "No requiere" si el contenido no pasa por el flujo; "Rechazado" si
+// volvió al editor con comentario.
+function EditionPill({ content }: { content: ContentRow }) {
+  if (!content.needs_editing) {
+    return (
+      <span className="inline-flex min-h-6 items-center whitespace-nowrap rounded-full bg-surface-muted px-[9px] text-[10px] font-semibold text-text-subtle ring-1 ring-border max-md:min-h-7 max-md:px-3 max-md:text-xs">
+        Sin edición
+      </span>
+    );
+  }
+  if (!content.edited && content.rejection_comment) {
+    return (
+      <span
+        className="inline-flex min-h-6 items-center whitespace-nowrap rounded-full bg-danger-soft px-[9px] text-[10px] font-semibold text-danger max-md:min-h-7 max-md:px-3 max-md:text-xs"
+        title={content.rejection_comment}
+      >
+        Rechazado
+      </span>
+    );
+  }
+  return (
+    <StatusPill
+      active={content.edited}
+      activeLabel="Editado"
+      inactiveLabel="Sin editar"
+    />
+  );
+}
+
+function ApprovalPill({ content }: { content: ContentRow }) {
+  if (!content.needs_editing) {
+    return <span className="text-text-subtle">—</span>;
+  }
+  return (
+    <StatusPill
+      active={content.accepted}
+      activeLabel="Aprobado"
+      inactiveLabel="Sin aprobar"
+    />
+  );
+}
+
 export function ContentsManagement({
   blocks,
   canAccept,
@@ -113,6 +156,7 @@ export function ContentsManagement({
   const [eventFilter, setEventFilter] = useState("all");
   const [approvedFilter, setApprovedFilter] = useState<ApprovedFilter>("all");
   const [editing, setEditing] = useState<ContentRow | "new" | null>(null);
+  const [rejecting, setRejecting] = useState<ContentRow | null>(null);
 
   const editorNames = useMemo(
     () =>
@@ -139,7 +183,9 @@ export function ContentsManagement({
 
       const matchesApproved =
         approvedFilter === "all" ||
-        (approvedFilter === "approved" ? content.accepted : !content.accepted);
+        (approvedFilter === "approved"
+          ? content.accepted || !content.needs_editing
+          : !content.accepted && content.needs_editing);
 
       return matchesQuery && matchesEvent && matchesApproved;
     });
@@ -157,10 +203,10 @@ export function ContentsManagement({
         <header className="mb-7 flex items-center justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-4">
           <div>
             <p className="mb-2 text-[10px] font-bold tracking-[0.14em] text-primary">
-              CONTENIDOS
+              RECEPCIÓN
             </p>
             <h1 className="text-[clamp(27px,3vw,34px)] font-bold tracking-tight text-text">
-              Registro de contenido
+              Recepción de contenido
             </h1>
           </div>
           {canRegister && (
@@ -305,6 +351,7 @@ export function ContentsManagement({
                     // El botón «Editado» solo lo ve el editor asignado (o un admin)
                     // y desaparece cuando el contenido ya está editado.
                     const canMarkEdited =
+                      content.needs_editing &&
                       !content.edited &&
                       Boolean(content.assigned_editor) &&
                       (isAdmin || content.assigned_editor === currentUserId);
@@ -313,8 +360,8 @@ export function ContentsManagement({
 
                     return (
                       // Móvil, de arriba hacia abajo (orden visual con `order`; el DOM no cambia):
-                      //  1. Etiquetas (tipo, edición, aprobación) y código
-                      //  2. Archivo y persona
+                      //  1. Etiquetas (tipo, edición, aprobación)
+                      //  2. Codigo, Archivo y persona
                       //  3. Formato | Duración
                       //  4. Bloque | Editor
                       //  5. Botones: editar, editado, aprobado y eliminar
@@ -330,28 +377,26 @@ export function ContentsManagement({
                             <span className="inline-flex min-h-7 items-center whitespace-nowrap rounded-full bg-primary-soft px-3 text-xs font-semibold text-primary-soft-text">
                               {categoryLabels[content.content_category]}
                             </span>
-                            <StatusPill
-                              active={content.edited}
-                              activeLabel="Editado"
-                              inactiveLabel="Sin editar"
-                            />
-                            <StatusPill
-                              active={content.accepted}
-                              activeLabel="Aprobado"
-                              inactiveLabel="Sin aprobar"
-                            />
-                          </div>
-                          <MobileLabel>Código</MobileLabel>
-                          {content.code}
+                            <EditionPill content={content} />
+                            {content.needs_editing && <ApprovalPill content={content} />}
+                          </div>                        
                         </td>
 
                         <td className={`${cell} max-md:order-2 max-md:col-span-2`}>
+                          <MobileLabel>Código</MobileLabel>
+                          {content.code}
+                          
                           <strong className="block max-w-[220px] truncate text-xs font-semibold text-text max-md:max-w-full max-md:text-base">
                             {content.file_name}
                           </strong>
                           <span className="block max-w-[220px] truncate text-[11px] text-text-subtle max-md:max-w-full max-md:text-xs">
                             {content.delivered_by}
                           </span>
+                          {!content.edited && content.rejection_comment && (
+                            <span className="mt-1 block text-[11px] leading-snug text-danger max-md:text-xs">
+                              Rechazado: {content.rejection_comment}
+                            </span>
+                          )}
                         </td>
 
                         {/* El tipo ya se ve como etiqueta arriba en móvil. */}
@@ -401,18 +446,10 @@ export function ContentsManagement({
 
                         {/* Solo escritorio: en móvil estos estados son las etiquetas de arriba. */}
                         <td className={`${cell} max-md:hidden`}>
-                          <StatusPill
-                            active={content.edited}
-                            activeLabel="Editado"
-                            inactiveLabel="Sin editar"
-                          />
+                          <EditionPill content={content} />
                         </td>
                         <td className={`${cell} max-md:hidden`}>
-                          <StatusPill
-                            active={content.accepted}
-                            activeLabel="Aprobado"
-                            inactiveLabel="Sin aprobar"
-                          />
+                          <ApprovalPill content={content} />
                         </td>
 
                         <td
@@ -428,6 +465,7 @@ export function ContentsManagement({
                             content={content}
                             onEdit={() => setEditing(content)}
                             onNotice={setNotice}
+                            onReject={() => setRejecting(content)}
                           />
                         </td>
                       </tr>
@@ -439,6 +477,17 @@ export function ContentsManagement({
           )}
         </section>
       </div>
+
+      {rejecting && (
+        <RejectDialog
+          content={rejecting}
+          onClose={() => setRejecting(null)}
+          onSuccess={(message) => {
+            setNotice({ message, type: "success" });
+            setRejecting(null);
+          }}
+        />
+      )}
 
       {editing && (
         <ContentFormDialog
@@ -489,6 +538,10 @@ function EditorCell({
 }) {
   const [isPending, startTransition] = useTransition();
 
+  if (!content.needs_editing) {
+    return <span className="text-text-subtle">No requiere</span>;
+  }
+
   if (!canAssign) {
     return content.assigned_editor ? (
       <span>{editorNames.get(content.assigned_editor) ?? "Editor"}</span>
@@ -535,6 +588,7 @@ function RowActions({
   content,
   onEdit,
   onNotice,
+  onReject,
 }: {
   canAccept: boolean;
   canDelete: boolean;
@@ -543,6 +597,7 @@ function RowActions({
   content: ContentRow;
   onEdit: () => void;
   onNotice: (notice: Notice) => void;
+  onReject: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -596,7 +651,7 @@ function RowActions({
         </button>
       )}
 
-      {canAccept && (
+      {canAccept && content.needs_editing && (
         <button
           aria-label={`Aprobar ${content.code}`}
           className={labelButton}
@@ -610,13 +665,13 @@ function RowActions({
       )}
 
 
-        {canAccept && (       
+      {canAccept && content.needs_editing && content.edited && (
         <button
           aria-label={`Rechazar ${content.code}`}
-          className={labelButton}
-          disabled={isPending || approveBlocked}
-          onClick={() => run(() => setContentAccepted(content.id, !content.accepted))}
-          title={approveBlocked ? "Debe estar editado primero" : undefined}
+          className={`${labelButton} border-danger/30 text-danger hover:enabled:border-danger hover:enabled:text-danger`}
+          disabled={isPending}
+          onClick={onReject}
+          title="Rechazar y devolver al editor"
           type="button"
         >
           <Icon name="rejected" />

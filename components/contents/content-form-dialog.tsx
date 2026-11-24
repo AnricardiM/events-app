@@ -37,6 +37,7 @@ export function ContentFormDialog({
   const [error, setError] = useState<string | null>(null);
   const [eventId, setEventId] = useState(content?.event_id ?? "");
   const [blockId, setBlockId] = useState(content?.block_id ?? "");
+  const [needsEditing, setNeedsEditing] = useState(content?.needs_editing ?? true);
 
   const eventBlocks = useMemo(
     () => blocks.filter((block) => block.event_id === eventId),
@@ -266,11 +267,39 @@ export function ContentFormDialog({
             </label>
           </div>
 
+          {/* El campo oculto garantiza que siempre se envíe "false" si el check está apagado. */}
+          <input name="needs_editing" type="hidden" value="false" />
+          <label className="flex items-start gap-[9px] text-xs font-semibold text-text-muted">
+            <input
+              checked={needsEditing}
+              className="mt-0.5 accent-primary"
+              disabled={isPending}
+              name="needs_editing"
+              onChange={(event) => setNeedsEditing(event.target.checked)}
+              type="checkbox"
+              value="true"
+            />
+            <span>
+              Necesita edición
+              <span className="mt-0.5 block text-[11px] font-normal text-text-subtle">
+                {needsEditing
+                  ? "Pasará por editor y revisión."
+                  : "No pasa por edición ni aprobación: queda listo al registrarse."}
+              </span>
+            </span>
+          </label>
+          {content && !needsEditing && content.needs_editing && (
+            <p className={noteClass} role="note">
+              Al guardar se quitará el editor asignado y se borrarán las marcas de
+              editado y aprobado de este contenido.
+            </p>
+          )}
+
           <p className={noteClass} role="note">
             {content
               ? "El código se mantiene mientras no cambies el bloque; si lo cambias, se genera uno nuevo con el prefijo del nuevo bloque."
               : "El código se asigna automáticamente al guardar (iniciales del bloque y número correlativo)."}{" "}
-            El editor, la marca de editado y la aceptación se gestionan desde el listado.
+            El editor, la marca de editado y la aprobación se gestionan desde Tareas y el listado.
           </p>
 
           {error && (

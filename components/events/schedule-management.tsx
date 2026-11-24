@@ -274,6 +274,11 @@ export function ScheduleManagement({
                           <strong className="text-xs font-semibold text-text max-md:text-base">
                             {block.block_name}
                           </strong>
+                          {block.manager_name && (
+                            <span className="mt-0.5 block text-[11px] text-text-subtle max-md:text-xs">
+                              Encargado: {block.manager_name}
+                            </span>
+                          )}
                           {/* Escritorio: la lista va bajo el nombre. En móvil va al final. */}
                           <div className="max-md:hidden">
                             <ContentsList items={blockContents} />
@@ -343,6 +348,19 @@ export function ScheduleManagement({
   );
 }
 
+// Estado del contenido en el flujo: sin edición → (sin editor → con editor →
+// editado → aprobado), con "rechazado" cuando volvió al editor con comentario.
+function contentStatus(item: BlockContent) {
+  if (!item.needs_editing) {
+    return { label: "Sin edición", className: "text-success" };
+  }
+  if (item.accepted) return { label: "Aprobado", className: "text-success" };
+  if (item.edited) return { label: "Editado", className: "text-text-subtle" };
+  if (item.rejection_comment) return { label: "Rechazado", className: "text-danger" };
+  if (item.assigned_editor) return { label: "Con editor", className: "text-text-subtle" };
+  return { label: "Sin editor", className: "text-text-subtle" };
+}
+
 function ContentsList({ items }: { items: BlockContent[] }) {
   if (items.length === 0) return null;
 
@@ -363,14 +381,8 @@ function ContentsList({ items }: { items: BlockContent[] }) {
             </span>
             <span className="flex flex-none items-center gap-2">
               {formatClock(item.duration_seconds)}
-              <span className={item.accepted ? "text-success" : "text-text-subtle"}>
-                {item.accepted
-                  ? "Aceptado"
-                  : item.edited
-                    ? "Editado"
-                    : item.assigned_editor
-                      ? "Con editor"
-                      : "Sin editor"}
+              <span className={contentStatus(item).className}>
+                {contentStatus(item).label}
               </span>
             </span>
           </li>
@@ -511,7 +523,7 @@ function ContentProgress({
         <p className="text-[11px] text-text-subtle max-md:text-xs">
           {fill.count} {fill.count === 1 ? "contenido" : "contenidos"} ·{" "}
           {progress?.assigned_count ?? 0} con editor ·{" "}
-          {progress?.accepted_count ?? 0} aceptados
+          {progress?.ready_count ?? 0} listos
         </p>
       )}
     </div>

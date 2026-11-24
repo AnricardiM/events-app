@@ -19,11 +19,11 @@ export type VisibleNavItem = Omit<NavItem, "roles">;
 
 const navigation: readonly NavItem[] = [
   { id: "inicio", label: "Inicio", icon: "home", url: "/dashboard" },
-  { id: "tareas", label: "Mis tareas", icon: "clipboard", url: "/tareas" },
+  { id: "tareas", label: "Mis tareas", icon: "clipboard", url: "/tareas", roles: ["admin", "review", "edit", "programmer"] },
   { id: "usuarios", label: "Usuarios", icon: "user", url: "/usuarios", roles: ["admin"] },
-  { id: "eventos", label: "Eventos", icon: "calendar", url: "/eventos" },
-  { id: "contenidos", label: "Recepcion", icon: "inbox", url: "/contenidos" },
-  { id: "administracion", label: "Administración", icon: "settings", url: "/administracion" },
+  { id: "eventos", label: "Eventos", icon: "calendar", url: "/eventos", roles: ["admin", "programmer"] },
+  { id: "contenidos", label: "Recepcion", icon: "inbox", url: "/contenidos" , roles: ["admin","enter" ]},
+  { id: "administracion", label: "Administración", icon: "settings", url: "/administracion", roles: ["admin" ] },
   
 ];
 
