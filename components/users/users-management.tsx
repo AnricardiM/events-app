@@ -10,10 +10,10 @@ import { Icon } from "../ui/icon";
 // Record<AppRole, ...> obliga a definir estilo para cada rol nuevo.
 const roleStyles: Record<AppRole, string> = {
   admin: "bg-primary text-on-primary",
-  revisor: "bg-navy-100 text-navy-800",
-  editor: "bg-gold-100 text-gold-800",
-  programador: "bg-navy-50 text-navy-700 ring-1 ring-navy-200",
-  ingresador: "bg-gold-50 text-gold-700 ring-1 ring-gold-200",
+  review: "bg-navy-100 text-navy-800",
+  edit: "bg-gold-100 text-gold-800",
+  programmer: "bg-navy-50 text-navy-700 ring-1 ring-navy-200",
+  enter: "bg-gold-50 text-gold-700 ring-1 ring-gold-200",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
